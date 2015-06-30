@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+
+		<!-- Archiving wizard -->
+		<act_window name="Archive" res_model="edi.tools.edi.wizard.archive.incoming"
+			src_model="edi.tools.edi.document.incoming" view_mode="form" target="new"
+			key2="client_action_multi" multi="True" id="edi_tools_edi_wizard_archive_incoming" />
+
+		<record id="edi_tools_wizard_edi_archive_incoming_form" model="ir.ui.view">
+			<field name="name">Archive</field>
+			<field name="model">edi.tools.edi.wizard.archive.incoming</field>
+			<field name="arch" type="xml">
+				<form string="Archive" version="7.0">
+					<p class="oe_grey">
+						Really archive all of these documents?
+					</p>
+					<footer>
+						<button name="archive" string="Archive" type="object"
+							class="oe_highlight" />
+						or
+						<button string="Cancel" class="oe_link" special="cancel" />
+					</footer>
+				</form>
+			</field>
+		</record>
+	</data>
+</openerp>

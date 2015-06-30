@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<openerp>
+	<data>
+
+		<!-- EDI Document import handler -->
+		<record model="ir.cron" id="edi_tools_edi_document_import">
+			<field name="name">EDI Document import</field>
+			<field name="active" eval="True" />
+			<field name="interval_number">1</field>
+			<field name="interval_type">minutes</field>
+			<field name="numbercall">-1</field>
+			<field name="doall" eval="False" />
+			<field name="nextcall" eval="time.strftime('%Y-%m-%d %H:%M')" />
+			<field name="model">edi.tools.edi.document.incoming</field>
+			<field name="function">import_process</field>
+			<field name="args">()</field>
+		</record>
+
+		<!-- EDI Document processor -->
+		<record model="ir.cron" id="edi_tools_edi_document_process">
+			<field name="name">EDI Document processor</field>
+			<field name="active" eval="True" />
+			<field name="interval_number">1</field>
+			<field name="interval_type">minutes</field>
+			<field name="numbercall">-1</field>
+			<field name="doall" eval="False" />
+			<field name="nextcall" eval="time.strftime('%Y-%m-%d %H:%M')" />
+						<field name="model">edi.tools.edi.document.incoming</field>
+			<field name="function">document_process</field>
+			<field name="args">()</field>
+		</record>
+
+	</data>
+</openerp>

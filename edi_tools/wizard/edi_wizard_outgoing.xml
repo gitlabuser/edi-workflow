@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <!-- Archiving wizard -->
+        <record id="edi_tools_wizard_edi_outgoing_form" model="ir.ui.view">
+            <field name="name">EDI Export</field>
+            <field name="model">edi.tools.edi.wizard.outgoing</field>
+            <field name="arch" type="xml">
+                <form string="Send EDI" version="7.0">
+                    <p class="oe_grey">
+						Really send all of these documents?
+					</p>
+                    <group>
+                      <field name="flow_id" domain=""/>
+                    </group>
+					<group>
+                      <field name="partner_id" domain="[('edi_relevant','=','True')]"/>
+                    </group>
+                    <footer>
+                        <button class="oe_highlight" name="send"
+                            string="Send"
+                            type="object"/>
+						or
+						<button
+                            class="oe_link" special="cancel" string="Cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</openerp>

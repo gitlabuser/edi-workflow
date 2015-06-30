@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<openerp>
+	<data>
+		<!-- EDI Workflow Header -->
+		<record model="workflow" id="edi_tools_edi_workflow_incoming">
+			<field name="name">edi.tools.edi.workflow.incoming</field>
+			<field name="osv">edi.tools.edi.document.incoming</field>
+			<field name="on_create">True</field>
+		</record>
+
+		<!-- EDI Workflow Activities -->
+		<record id="act_incoming_new" model="workflow.activity">
+			<field name="wkf_id" ref="edi_tools_edi_workflow_incoming" />
+			<field name="flow_start">True</field>
+			<field name="name">new</field>
+			<field name="kind">function</field>
+			<field name="action">action_new()</field>
+		</record>
+		<record id="act_incoming_ready" model="workflow.activity">
+			<field name="wkf_id" ref="edi_tools_edi_workflow_incoming" />
+			<field name="name">ready</field>
+			<field name="kind">function</field>
+			<field name="action">action_ready()</field>
+		</record>
+		<record id="act_incoming_in_error" model="workflow.activity">
+			<field name="wkf_id" ref="edi_tools_edi_workflow_incoming" />
+			<field name="name">in_error</field>
+			<field name="kind">function</field>
+			<field name="action">action_in_error()</field>
+		</record>
+		<record id="act_incoming_processing" model="workflow.activity">
+			<field name="wkf_id" ref="edi_tools_edi_workflow_incoming" />
+			<field name="name">processing</field>
+			<field name="kind">function</field>
+			<field name="action">action_processing()</field>
+		</record>
+		<record id="act_incoming_processed" model="workflow.activity">
+			<field name="wkf_id" ref="edi_tools_edi_workflow_incoming" />
+			<field name="name">processed</field>
+			<field name="kind">function</field>
+			<field name="action">action_processed()</field>
+		</record>
+		<record id="act_incoming_archived" model="workflow.activity">
+			<field name="wkf_id" ref="edi_tools_edi_workflow_incoming" />
+			<field name="name">archived</field>
+			<field name="kind">function</field>
+			<field name="action">action_archive()</field>
+			<field name="flow_stop">True</field>
+			<field name="kind">stopall</field>
+		</record>
+
+		<!-- EDI Workflow Transistions -->
+		<record id="trans_new_ready" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_new" />
+			<field name="act_to" ref="act_incoming_ready" />
+			<field name="signal">button_to_ready</field>
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_ready_in_error" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_ready" />
+			<field name="act_to" ref="act_incoming_in_error" />
+			<field name="condition">valid() == False</field>
+		</record>
+		<record id="trans_in_error_ready" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_in_error" />
+			<field name="act_to" ref="act_incoming_ready" />
+			<field name="signal">button_to_ready</field>
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_ready_processing" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_ready" />
+			<field name="act_to" ref="act_incoming_processing" />
+			<field name="signal">document_processor_pickup</field>
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_processing_processed" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_processing" />
+			<field name="act_to" ref="act_incoming_processed" />
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_processed_in_error" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_processed" />
+			<field name="act_to" ref="act_incoming_in_error" />
+			<field name="condition">processed == False</field>
+		</record>
+		<record id="trans_processed_archived" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_processed" />
+			<field name="act_to" ref="act_incoming_archived" />
+			<field name="signal">button_to_archived</field>
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_new_archived" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_new" />
+			<field name="act_to" ref="act_incoming_archived" />
+			<field name="signal">button_to_archived</field>
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_ready_archived" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_ready" />
+			<field name="act_to" ref="act_incoming_archived" />
+			<field name="signal">button_to_archived</field>
+			<field name="condition">True</field>
+		</record>
+		<record id="trans_in_error_archived" model="workflow.transition">
+			<field name="act_from" ref="act_incoming_in_error" />
+			<field name="act_to" ref="act_incoming_archived" />
+			<field name="signal">button_to_archived</field>
+			<field name="condition">True</field>
+		</record>
+	</data>
+</openerp>

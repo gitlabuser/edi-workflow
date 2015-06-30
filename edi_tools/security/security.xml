@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="edi_tools_edi_user" model="res.groups">
+            <field name="name">EDI User</field>
+        </record>
+        <record id="edi_tools_edi_access_partnerflow" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_edi_partnerflow"/>
+            <field name="name">edi.tools.edi.user.partnerflow</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+            <field eval="1" name="perm_write"/>
+            <field eval="1" name="perm_unlink"/>
+            <field eval="1" name="perm_create"/>
+        </record>
+        <record id="edi_tools_edi_access_flow" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_edi_flow"/>
+            <field name="name">edi.tools.edi.user.flow</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+        </record>
+        <record id="edi_tools_access_settings" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_settings"/>
+            <field name="name">edi.tools.settings.document</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+            <field eval="1" name="perm_write"/>
+            <field eval="1" name="perm_unlink"/>
+            <field eval="1" name="perm_create"/>
+        </record>
+        <record id="edi_tools_access_settings_connection" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_settings_connection"/>
+            <field name="name">edi.tools.settings.connection.document</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+            <field eval="1" name="perm_write"/>
+            <field eval="1" name="perm_unlink"/>
+            <field eval="1" name="perm_create"/>
+        </record>
+        <record id="edi_tools_edi_access_document" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_edi_document"/>
+            <field name="name">edi.tools.edi.user.document</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+            <field eval="1" name="perm_write"/>
+            <field eval="1" name="perm_unlink"/>
+            <field eval="1" name="perm_create"/>
+        </record>
+        <record id="edi_tools_edi_access_document_incoming" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_edi_document_incoming"/>
+            <field name="name">edi.tools.edi.user.document.incoming</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+            <field eval="1" name="perm_write"/>
+            <field eval="1" name="perm_unlink"/>
+            <field eval="1" name="perm_create"/>
+        </record>
+        <record id="edi_tools_edi_access_document_outgoing" model="ir.model.access">
+            <field name="model_id" ref="edi_tools.model_edi_tools_edi_document_outgoing"/>
+            <field name="name">edi.tools.edi.user.document.outgoing</field>
+            <field name="group_id" ref="edi_tools_edi_user"/>
+            <field eval="1" name="perm_read"/>
+            <field eval="1" name="perm_write"/>
+            <field eval="1" name="perm_unlink"/>
+            <field eval="1" name="perm_create"/>
+        </record>
+    </data>
+</openerp>

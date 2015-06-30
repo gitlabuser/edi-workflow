@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+
+
+		<!-- "Move to ready" wizard -->
+		<act_window name="Ready" res_model="edi.tools.edi.wizard.ready"
+			src_model="edi.tools.edi.document.incoming" view_mode="form" target="new"
+			key2="client_action_multi" multi="True" id="edi_tools_edi_wizard_ready" />
+
+		<record id="edi_tools_wizard_edi_ready_form" model="ir.ui.view">
+			<field name="name">Mark as ready</field>
+			<field name="model">edi.tools.edi.wizard.ready</field>
+			<field name="arch" type="xml">
+				<form string="Mark as ready" version="7.0">
+					<p class="oe_grey">
+						Really mark all of these documents as ready?
+					</p>
+					<footer>
+						<button name="ready" string="Ok" type="object" class="oe_highlight" />
+						or
+						<button string="Cancel" class="oe_link" special="cancel" />
+					</footer>
+				</form>
+			</field>
+		</record>
+
+	</data>
+</openerp>
