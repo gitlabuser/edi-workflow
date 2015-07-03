@@ -12,6 +12,7 @@
         'sale_stock_reference_chainer',
         'sale_stock_incoterm_chainer',
         'product_customerinfo',
+        'delivery_instructions',
     ],
     'data': [
         'data/config.xml',

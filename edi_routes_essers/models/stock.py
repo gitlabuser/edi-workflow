@@ -7,21 +7,27 @@ from openerp import models, fields, api, _
 from openerp.exceptions import except_orm
 from openerp.addons.edi_tools.models.exceptions import EdiIgnorePartnerError, EdiValidationError
 
+from builder import EssersEdiBuilder
+
 _logger = logging.getLogger(__name__)
+
 
 class stock_picking(models.Model):
     _inherit = "stock.picking"
 
-    crossdock_overrule = fields.Selection([('Y','Yes'), ('N','No')], copy=False)
-    groupage_overrule = fields.Selection([('Y','Yes'), ('N','No')], copy=False)
+    crossdock_overrule = fields.Selection([('Y', 'Yes'), ('N', 'No')], copy=False)
+    groupage_overrule = fields.Selection([('Y', 'Yes'), ('N', 'No')], copy=False)
 
     @api.model
     def valid_for_edi_export_essers(self, record):
-        if record.state != 'assigned': return False
-        if not record.partner_id.ref: return False
+        if record.state != 'assigned':
+            return False
+        if not record.partner_id.ref:
+            return False
         if record.origin:
             order = self.env['sale.order'].search([('name', '=', record.origin)])
-            if not order.partner_id.ref: return False
+            if not order.partner_id.ref:
+                return False
         return True
 
     @api.multi
@@ -34,7 +40,8 @@ class stock_picking(models.Model):
         for picking in valid_pickings:
             content = picking.edi_export_essers(picking, None)
             result = self.env['edi.tools.edi.document.outgoing'].create_from_content(picking.name, content, partner_id.id, 'stock.picking', 'send_edi_export_essers', type='XML')
-            if not result: raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following picking %s') % (picking.name)))
+            if not result:
+                raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following picking %s') % (picking.name)))
 
         return True
 
@@ -47,16 +54,16 @@ class stock_picking(models.Model):
         # Actual EDI conversion of the delivery
         root = ET.Element("SHP_OBDLV_SAVE_REPLICA02")
         idoc = ET.SubElement(root, "IDOC")
-        idoc.set('BEGIN','1')
+        idoc.set('BEGIN', '1')
         header = ET.SubElement(idoc, "EDI_DC40")
-        header.set('SEGMENT','1')
+        header.set('SEGMENT', '1')
         ET.SubElement(header, "MESTYP").text = 'SHP_OBDLV_SAVE_REPLICA'
         header = ET.SubElement(idoc, "E1SHP_OBDLV_SAVE_REPLICA")
-        header.set('SEGMENT','1')
+        header.set('SEGMENT', '1')
 
         temp = ET.SubElement(header, "E1BPOBDLVHDR")
-        temp.set('SEGMENT','1')
-        ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/','_')
+        temp.set('SEGMENT', '1')
+        ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
         ET.SubElement(temp, "EXTDELV_NO").text = delivery.order_reference
 
         if delivery.incoterm:
@@ -65,66 +72,12 @@ class stock_picking(models.Model):
             else:
                 ET.SubElement(temp, "ROUTE").text = 'ESSERS'
 
-        # Sold to
-        if sale_order:
-            temp = ET.SubElement(header, "E1BPDLVPARTNER")
-            temp.set('SEGMENT','1')
-            ET.SubElement(temp, "ADDRESS_NO").text = '1'
-            ET.SubElement(temp, "PARTN_ROLE").text = 'AG'
-            ET.SubElement(temp, "PARTNER_NO").text = sale_order.partner_id.ref
-            temp = ET.SubElement(header, "E1BPADR1")
-            temp.set('SEGMENT','1')
-            ET.SubElement(temp, "ADDR_NO").text = '1'
-            ET.SubElement(temp, "NAME").text = sale_order.partner_id.name
-            ET.SubElement(temp, "CITY").text = sale_order.partner_id.city
-            ET.SubElement(temp, "POSTL_COD1").text = sale_order.partner_id.zip
-            ET.SubElement(temp, "STREET").text = sale_order.partner_id.street
-            ET.SubElement(temp, "STR_SUPPL1").text = sale_order.partner_id.street2
-            ET.SubElement(temp, "COUNTRY").text = sale_order.partner_id.country_id.code
-            ET.SubElement(temp, "LANGU").text = sale_order.partner_id.lang[3:5] or 'NL'
-
-        # Ship to
-        temp = ET.SubElement(header, "E1BPDLVPARTNER")
-        temp.set('SEGMENT','1')
-        ET.SubElement(temp, "ADDRESS_NO").text = '2'
-        ET.SubElement(temp, "PARTN_ROLE").text = 'WE'
-        ET.SubElement(temp, "PARTNER_NO").text = delivery.partner_id.ref
-        temp = ET.SubElement(header, "E1BPADR1")
-        temp.set('SEGMENT','1')
-        ET.SubElement(temp, "ADDR_NO").text = '2'
-        ET.SubElement(temp, "NAME").text = delivery.partner_id.name
-        ET.SubElement(temp, "CITY").text = delivery.partner_id.city
-        ET.SubElement(temp, "POSTL_COD1").text = delivery.partner_id.zip
-        ET.SubElement(temp, "STREET").text = delivery.partner_id.street
-        ET.SubElement(temp, "STR_SUPPL1").text = delivery.partner_id.street2
-        ET.SubElement(temp, "COUNTRY").text = delivery.partner_id.country_id.code
-        ET.SubElement(temp, "LANGU").text = delivery.partner_id.lang[3:5] or 'NL'
-
-        # Timing info
-        temp = ET.SubElement(header, "E1BPDLVDEADLN")
-        temp.set('SEGMENT','1')
-        ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/','_')
-        ET.SubElement(temp, "TIMETYPE").text = 'WSHDRLFDAT'
-        ET.SubElement(temp, "TIMESTAMP_UTC").text = datetime.datetime.strptime(delivery.min_date, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S')
-        ET.SubElement(temp, "TIMEZONE").text = 'CET'
-
-        # Crossdock
-        if delivery.crossdock_overrule:
-            temp = ET.SubElement(header, "E1BPEXT")
-            temp.set('SEGMENT','1')
-            ET.SubElement(temp, "PARAM").text = delivery.name.replace('/','_') + '000000'
-            ET.SubElement(temp, "ROW").text = '0'
-            ET.SubElement(temp, "FIELD").text = 'SSP'
-            ET.SubElement(temp, "VALUE").text = delivery.crossdock_overrule
-
-        # Groupage
-        if delivery.groupage_overrule:
-            temp = ET.SubElement(header, "E1BPEXT")
-            temp.set('SEGMENT','1')
-            ET.SubElement(temp, "PARAM").text = delivery.name.replace('/','_') + '000000'
-            ET.SubElement(temp, "ROW").text = '0'
-            ET.SubElement(temp, "FIELD").text = 'SOP'
-            ET.SubElement(temp, "VALUE").text = delivery.groupage_overrule
+        delivery._build_partner_header(header)
+        delivery._build_delivery_date_header(header)
+        delivery._build_crossdock_overrule_header(header)
+        delivery._build_groupage_overrule_header(header)
+        delivery._build_instruction_header(header)
+        delivery._build_priority_header(header)
 
         # Line items
         i = 0
@@ -135,8 +88,8 @@ class stock_picking(models.Model):
 
             i = i + 100
             temp = ET.SubElement(header, "E1BPOBDLVITEM")
-            temp.set('SEGMENT','1')
-            ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/','_')
+            temp.set('SEGMENT', '1')
+            ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
             ET.SubElement(temp, "ITM_NUMBER").text = "%06d" % (i,)
             ET.SubElement(temp, "MATERIAL").text = line.product_id.name
             ET.SubElement(temp, "DLV_QTY_STOCK").text = str(int(line.product_qty))
@@ -148,43 +101,95 @@ class stock_picking(models.Model):
                 for bom in line.product_id.bom_ids[0].bom_lines:
                     j = j + 1
                     temp = ET.SubElement(header, "E1BPOBDLVITEM")
-                    temp.set('SEGMENT','1')
-                    ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/','_')
+                    temp.set('SEGMENT', '1')
+                    ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
                     ET.SubElement(temp, "ITM_NUMBER").text = "%06d" % (j,)
                     ET.SubElement(temp, "MATERIAL").text = bom.product_id.name
                     ET.SubElement(temp, "DLV_QTY_STOCK").text = str(int(line.product_qty * bom.product_qty))
                     ET.SubElement(temp, "BOMEXPL_NO").text = '6'
 
                     temp = ET.SubElement(header, "E1BPOBDLVITEMORG")
-                    temp.set('SEGMENT','1')
-                    ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/','_')
+                    temp.set('SEGMENT', '1')
+                    ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
                     ET.SubElement(temp, "ITM_NUMBER").text = "%06d" % (j,)
                     ET.SubElement(temp, "STGE_LOC").text = '0'
 
             temp = ET.SubElement(header, "E1BPOBDLVITEMORG")
-            temp.set('SEGMENT','1')
-            ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/','_')
+            temp.set('SEGMENT', '1')
+            ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
             ET.SubElement(temp, "ITM_NUMBER").text = "%06d" % (i,)
             if not line.storage_location:
                 ET.SubElement(temp, "STGE_LOC").text = '0'
             else:
                 ET.SubElement(temp, "STGE_LOC").text = line.storage_location
 
-            if sale_order:
-                for customer_id in line.product_id.customer_ids:
-                    if customer_id.name == sale_order.partner_id.parent_id:
-                        temp = ET.SubElement(header, "E1BPEXT")
-                        temp.set('SEGMENT','1')
-                        ET.SubElement(temp, "PARAM").text = delivery.name.replace('/','_') + "%06d" % (i,)
-                        ET.SubElement(temp, "ROW").text = '0'
-                        ET.SubElement(temp, "FIELD").text = 'CIC'
-                        ET.SubElement(temp, "VALUE").text = customer_id.product_code
-                    break
+            line._build_line_customerinfo(header, i)
 
             # Write this EDI sequence to the delivery for referencing the response
             line.write({'edi_sequence': "%06d" % (i,)})
 
         return root
+
+    @api.multi
+    def _name_edi(self, padding_end=0):
+        self.ensure_one()
+        return self.name.replace('/', '_') + (padding_end * '0')
+
+    @api.multi
+    def _build_partner_header(self, header_element):
+        builder = EssersEdiBuilder()
+        # sold-to
+        sale_order = self.env['sale.order'].search([('name', '=', self.origin)], limit=1)
+        if sale_order:
+            builder.build_e1bpdlvpartner_element(header_element, '1', 'AG', sale_order.partner_id.ref)
+            builder.build_e1bpadr1_element(header_element,
+                                           sequence='1',
+                                           name=sale_order.partner_id.name,
+                                           city=sale_order.partner_id.city,
+                                           zipcode=sale_order.partner_id.zip,
+                                           street1=sale_order.partner_id.street,
+                                           street2=sale_order.partner_id.street2,
+                                           country=sale_order.partner_id.country_id.code,
+                                           language=sale_order.partner_id.lang[3:5])
+        # ship-to
+        builder.build_e1bpdlvpartner_element(header_element, '2', 'WE', self.partner_id.ref)
+        builder.build_e1bpadr1_element(header_element,
+                                       sequence='2',
+                                       name=self.partner_id.name,
+                                       city=self.partner_id.city,
+                                       zipcode=self.partner_id.zip,
+                                       street1=self.partner_id.street,
+                                       street2=self.partner_id.street2,
+                                       country=self.partner_id.country_id.code,
+                                       language=self.partner_id.lang[3:5])
+
+    @api.multi
+    def _build_delivery_date_header(self, header_element):
+        sale_order = self.env['sale.order'].search([('name', '=', self.origin)], limit=1)
+        if sale_order and sale_order.requested_date:
+            EssersEdiBuilder().build_e1bpdlvdeadln_element(header_element, self._name_edi(), self.min_date, 'CET')
+
+    @api.multi
+    def _build_crossdock_overrule_header(self, header_element):
+        if self.crossdock_overrule:
+            EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(6), '0', 'SSP', self.crossdock_overrule)
+
+    @api.multi
+    def _build_groupage_overrule_header(self, header_element):
+        if self.groupage_overrule:
+            EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(6), '0', 'SOP', self.groupage_overrule)
+
+    @api.multi
+    def _build_instruction_header(self, header_element):
+        if self.instruction_1:
+            EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(6), '001', 'CMT', self.instruction_1[:70])
+        if self.instruction_2:
+            EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(6), '002', 'CMT', self.instruction_2[:70])
+
+    @api.multi
+    def _build_priority_header(self, header_element):
+        if self.priority == 3:
+            EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(6), '0', 'SBY', '1')
 
     @api.model
     def edi_import_essers_validator(self, document_ids):
@@ -203,18 +208,19 @@ class stock_picking(models.Model):
             raise EdiValidationError('Content is not valid XML or the structure deviates from what is expected.')
 
         # Check if we can find the delivery
-        delivery = self.search([('name','=',content['DELIVERY'].replace('_','/'))], limit=1)
+        delivery = self.search([('name', '=', content['DELIVERY'].replace('_', '/'))], limit=1)
         if not delivery:
             raise EdiValidationError('Could not find the referenced delivery: {!s}.'.format(content['DELIVERY']))
 
         lines_without_sequence = [ml for ml in delivery.move_lines if not ml.edi_sequence]
-        if lines_without_sequence: raise EdiValidationError("Delivery %s has lines without edi_sequence" % (delivery.name))
+        if lines_without_sequence:
+            raise EdiValidationError("Delivery %s has lines without edi_sequence" % (delivery.name))
 
         # Check if all the line items match
         if not content['E1BPOBDLVITEMCON']:
             raise EdiValidationError('No line items provided')
 
-        #cast the line items to a list if there's only 1 item
+        # cast the line items to a list if there's only 1 item
         if not isinstance(content['E1BPOBDLVITEMCON'], list):
             content['E1BPOBDLVITEMCON'] = [content['E1BPOBDLVITEMCON']]
         for edi_line in content['E1BPOBDLVITEMCON']:
@@ -228,7 +234,7 @@ class stock_picking(models.Model):
                 raise EdiValidationError('Line item provided with quantity equal to zero (0.0).')
 
             move_line = [x for x in delivery.move_lines if x.edi_sequence == edi_line['DELIV_ITEM']]
-            if not move_line: # skip BOM explosion lines
+            if not move_line:  # skip BOM explosion lines
                 continue
             move_line = move_line[0]
             if move_line.product_id.name != edi_line['MATERIAL']:
@@ -248,7 +254,7 @@ class stock_picking(models.Model):
         content = xmltodict.parse(document.content)
         content = content['SHP_OBDLV_CONFIRM_DECENTRAL02']['IDOC']['E1SHP_OBDLV_CONFIRM_DECENTR']
 
-        delivery = self.search([('name','=', content['DELIVERY'].replace('_','/'))])
+        delivery = self.search([('name', '=', content['DELIVERY'].replace('_', '/'))])
         _logger.debug("Delivery found %d (%s)", delivery.id, delivery.name)
 
         if delivery.partner_id in document.flow_id.ignore_partner_ids:
@@ -281,12 +287,27 @@ class stock_picking(models.Model):
 
         return True
 
+
 class stock_move(models.Model):
     _inherit = "stock.move"
 
     edi_sequence = fields.Char(size=256, copy=False)
     storage_location = fields.Selection([
-        ('0','Available'),
-        ('B','Back To Back'),
-        ('V','New Product Version'),
-        ('Q','Quality Control')])
+        ('0', 'Available'),
+        ('B', 'Back To Back'),
+        ('V', 'New Product Version'),
+        ('Q', 'Quality Control')])
+
+    @api.multi
+    def _name_edi(self, line_num=0):
+        self.ensure_one()
+        return self.picking_id.name.replace('/', '_') + "%06d" % (line_num,)
+
+    @api.multi
+    def _build_line_customerinfo(self, header_element, line_num):
+        sale_order = self.env['sale.order'].search([('name', '=', self.picking_id.origin)], limit=1)
+        if sale_order:
+            for customer_id in self.product_id.customer_ids:
+                if customer_id.name == sale_order.partner_id.parent_id:
+                    EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(line_num), '0', 'CIC', customer_id.product_code)
+                break
