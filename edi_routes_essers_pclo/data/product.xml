@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="product_ul_essers_pallet" model="product.ul">
+            <field name="name">Essers Pallet</field>
+            <field name="type">pallet</field>
+        </record>
+        <record id="product_ul_essers_box" model="product.ul">
+            <field name="name">Essers Box</field>
+            <field name="type">box</field>
+        </record>
+    </data>
+</openerp>

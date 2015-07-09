@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="edi_essers_pclo_delivery_in" model="edi.tools.edi.flow">
+            <field name="name">Essers PCLO (in)</field>
+            <field name="direction">in</field>
+            <field name="model">stock.picking</field>
+            <field name="method">receive_edi_import_essers_pclo</field>
+            <field name="validator"></field>
+        </record>
+    </data>
+</openerp>

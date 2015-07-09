@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+    <record id="essers_pclo_import_view" model="ir.ui.view">
+      <field name="name">Import Essers PCLO File</field>
+      <field name="model">essers.pclo.import</field>
+      <field name="priority">1</field>
+      <field name="arch" type="xml">
+        <form string="Import Essers PCLO File" version="7.0">
+            <group col="2">
+                <field name="pclo_data" filename="pclo_fname"/>
+            </group>
+            <group>
+                <field name="deliver"/>
+            </group>
+            <footer>
+                <button name="pclo_parsing" string="_Import" type="object" class="oe_highlight"/>
+                or
+                <button string="Cancel" class="oe_link" special="cancel"/>
+            </footer>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_essers_pclo_import" model="ir.actions.act_window">
+      <field name="name">Import Essers PCLO File</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">essers.pclo.import</field>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+      <field name="view_id" ref="essers_pclo_import_view"/>
+    </record>
+
+    <menuitem name="Import PCLO File" parent="stock.menu_stock_warehouse_mgmt" id="menu_clubit_essers_pclo_import" action="action_essers_pclo_import" sequence="10"/>
+
+  </data>
+</openerp>
