@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="edi_essers_INVOIC_D96A_out" model="edi.tools.edi.flow">
+            <field name="name">INVOIC D96A(out)</field>
+            <field name="direction">out</field>
+            <field name="model">account.invoice</field>
+            <field name="method">send_edi_export_invoic</field>
+            <field name="partner_resolver"></field>
+        </record>
+    </data>
+</openerp>
