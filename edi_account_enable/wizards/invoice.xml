@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <act_window
+            id="act_edi_account_enable_invoice"
+            key2="client_action_multi" multi="True"
+            name="Send EDI"
+            res_model="edi.tools.edi.wizard.outgoing"
+            src_model="account.invoice" target="new"
+            view_id="edi_tools.edi_tools_wizard_edi_outgoing_form" view_mode="form"/>
+    </data>
+</openerp>
