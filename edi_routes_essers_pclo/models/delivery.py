@@ -132,7 +132,6 @@ class stock_picking(osv.Model):
                 if move.state == 'done':
                     continue
                 rows_for_sequence = [r for r in rows if r[ORDER_LINE_NUMBER] == move.edi_sequence]
-                import pdb; pdb.set_trace()
                 ref_operation = move.linked_move_operation_ids[0].operation_id # normally there should only be one operation per move
                 for row in rows_for_sequence:
                     quantity = float(row[ORDER_LINE_QUANTITY]) or 0.0
