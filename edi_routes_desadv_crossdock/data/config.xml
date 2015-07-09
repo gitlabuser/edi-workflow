@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record id="edi_desadv_delivery_out" model="edi.tools.edi.flow">
+            <field name="name">DESADV XDock(out)</field>
+            <field name="direction">out</field>
+            <field name="model">stock.picking</field>
+            <field name="method">send_edi_export_desadv_crossdock</field>
+            <field name="partner_resolver"></field>
+        </record>
+    </data>
+</openerp>
