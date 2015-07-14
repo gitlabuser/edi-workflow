@@ -76,7 +76,7 @@ class account_invoice(osv.Model, EDIMixin):
 
         for invoice in valid_invoices:
             content = invoice.edi_export_invoic(invoice, None)
-            result = self.env['edi.tools.edi.document.outgoing'].create_from_content(invoic.name, content, partner_id.id, 'account.invoice', 'send_edi_export_invoic', type='json')
+            result = self.env['edi.tools.edi.document.outgoing'].create_from_content(invoice.name, content, partner_id.id, 'account.invoice', 'send_edi_export_invoic', type='json')
             if not result:
                 raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following invoice %s') % (invoice.name)))
 
@@ -157,7 +157,7 @@ class account_invoice(osv.Model, EDIMixin):
             edi_doc['LEVERPLAATS'] = partner.ref
 
         # Sale order fields
-        d = datetime.datetime.strptime(order.date_order, "%Y-%m-%d")
+        d = datetime.datetime.strptime(order.date_order, "%Y-%m-%d %H:%M:%S")
         edi_doc['REFERENTIEDATUM'] = d.strftime("%Y%m%d")
         partner = partner_db.browse(cr, uid, order.partner_id.id, context)
         if partner:
