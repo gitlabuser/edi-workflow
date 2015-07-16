@@ -53,9 +53,9 @@ class account_invoice(osv.Model, EDIMixin):
         if invoice.type == 'out_refund':
             invoice_type = '30'
         if invoice.partner_id.parent_id:
-            ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.parent_id.reference
+            ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.parent_id.expertm_reference
         else:
-            ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.reference
+            ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.expertm_reference
 
         ET.SubElement(sale, "CurrencyCode").text   = invoice.currency_id.name
         ET.SubElement(sale, "DocType").text        = invoice_type
