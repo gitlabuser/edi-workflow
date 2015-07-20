@@ -34,7 +34,7 @@ class account_invoice(osv.Model, EDIMixin):
 
         for invoice in valid_invoices:
             content = invoice.edi_export_invoice_expertm(invoice, None)
-            result = self.env['edi.tools.edi.document.outgoing'].create_from_content(invoice.name, content, partner_id.id, 'account.invoice', 'send_edi_export_invoice_expertm', type='XML')
+            result = self.env['edi.tools.edi.document.outgoing'].create_from_content(invoice.internal_number, content, partner_id.id, 'account.invoice', 'send_edi_export_invoice_expertm', type='XML')
             if not result:
                 raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following invoice %s') % (invoice.name)))
         return result
@@ -106,27 +106,27 @@ class account_invoice(osv.Model, EDIMixin):
 
         return root
 
-class account_invoice_line(osv.Model):
-
-    _name = "account.invoice.line"
-    _inherit = "account.invoice.line"
-
-    def product_id_change(self, cr, uid, ids, product, uom_id, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, currency_id=False, context=None, company_id=None):
-
-        result = super(account_invoice_line,self).product_id_change(cr, uid, ids, product, uom_id, qty, name, type, partner_id, fposition_id, price_unit, currency_id, context, company_id)
-        if not partner_id or not product:
-            return result
-
-        prod = self.pool.get('product.product').browse(cr, uid, product, context=context)
-        if type == 'out_refund':
-            backup = result['value']['account_id']
-            result['value']['account_id'] = prod.property_account_expense.id
-            if not result['value']['account_id']:
-                result['value']['account_id'] = prod.categ_id.refund_account.id
-            if not result['value']['account_id']:
-                result['value']['account_id'] = backup
-
-        fpos_db = self.pool.get('account.fiscal.position')
-        fpos = fposition_id and fpos_db.browse(cr, uid, fposition_id, context=context) or False
-        result['value']['account_id'] = fpos_db.map_account(cr, uid, fpos, result['value']['account_id'])
-        return result
+# class account_invoice_line(osv.Model):
+#
+#     _name = "account.invoice.line"
+#     _inherit = "account.invoice.line"
+#
+#     def product_id_change(self, cr, uid, ids, product, uom_id, qty=0, name='', type='out_invoice', partner_id=False, fposition_id=False, price_unit=False, currency_id=False, context=None, company_id=None):
+#
+#         result = super(account_invoice_line,self).product_id_change(cr, uid, ids, product, uom_id, qty, name, type, partner_id, fposition_id, price_unit, currency_id, context, company_id)
+#         if not partner_id or not product:
+#             return result
+#
+#         prod = self.pool.get('product.product').browse(cr, uid, product, context=context)
+#         if type == 'out_refund':
+#             backup = result['value']['account_id']
+#             result['value']['account_id'] = prod.property_account_expense.id
+#             if not result['value']['account_id']:
+#                 result['value']['account_id'] = prod.categ_id.refund_account.id
+#             if not result['value']['account_id']:
+#                 result['value']['account_id'] = backup
+#
+#         fpos_db = self.pool.get('account.fiscal.position')
+#         fpos = fposition_id and fpos_db.browse(cr, uid, fposition_id, context=context) or False
+#         result['value']['account_id'] = fpos_db.map_account(cr, uid, fpos, result['value']['account_id'])
+#         return result
