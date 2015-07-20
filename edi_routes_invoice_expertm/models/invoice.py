@@ -39,71 +39,75 @@ class account_invoice(osv.Model, EDIMixin):
                 raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following invoice %s') % (invoice.name)))
         return result
 
-    @api.cr_uid_context
-    def edi_export_invoice_expertm(self, cr, uid, invoice, edi_struct=None, context=None):
+    @api.cr_uid_ids_context
+    def edi_export_invoice_expertm(self, cr, uid, ids, edi_struct=None, context=None):
         root = ET.Element("ImportExpMPlus")
         root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
         root.set("xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
 
+        invoices = pick_db.browse(cr, uid, ids, context=context)
+        invoice = next(iter(invoices), None)
+
         sales = ET.SubElement(root, "Sales")
         sale = ET.SubElement(sales, "Sale")
-        total_done = False
-        numbers = re.findall('\d+', invoice.number)
-        invoice_type = '10'
-        if invoice.type == 'out_refund':
-            invoice_type = '30'
-        if invoice.partner_id.parent_id:
-            ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.parent_id.expertm_reference
-        else:
-            ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.expertm_reference
-
-        ET.SubElement(sale, "CurrencyCode").text   = invoice.currency_id.name
-        ET.SubElement(sale, "DocType").text        = invoice_type
-        ET.SubElement(sale, "DocNumber").text      = ''.join(numbers)
-        ET.SubElement(sale, "DocDate").text        = datetime.datetime.strptime(invoice.date_invoice, "%Y-%m-%d").strftime("%d/%m/%Y")
-        ET.SubElement(sale, "DueDate").text        = datetime.datetime.strptime(invoice.date_due, "%Y-%m-%d").strftime("%d/%m/%Y")
-        ET.SubElement(sale, "OurRef").text         = invoice.name
-        ET.SubElement(sale, "Amount").text         = ('%.2f' % invoice.amount_total).replace('.',',')
-        ET.SubElement(sale, "Status").text         = '0'
-
-        details = ET.SubElement(sale, "Details")
-        for line in invoice.move_id.line_id:
-
-            if invoice.account_id.code == line.account_id.code and total_done:
-                continue
-
-            detail = ET.SubElement(details, "Detail")
-            anal = ET.SubElement(detail, "Analytics1")
-            anal = ET.SubElement(anal, "Analytic")
-
-            if invoice.account_id.code == line.account_id.code:
-
-                total_done = True
-                ET.SubElement(detail, "Amount").text  = ('%.2f' % invoice.amount_total).replace('.',',')
-                ET.SubElement(anal, "Amount").text    = ('%.2f' % invoice.amount_total).replace('.',',')
-                if invoice.type == 'out_refund':
-                    ET.SubElement(detail, "DebCre").text  = '-1'
-                else:
-                    ET.SubElement(detail, "DebCre").text  = '1'
+        for invoice in invoices:
+            total_done = False
+            numbers = re.findall('\d+', invoice.number)
+            invoice_type = '10'
+            if invoice.type == 'out_refund':
+                invoice_type = '30'
+            if invoice.partner_id.parent_id:
+                ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.parent_id.expertm_reference
             else:
+                ET.SubElement(sale, "Customer_Prime").text = invoice.partner_id.expertm_reference
 
-                if line.debit != 0:
-                    ET.SubElement(detail, "Amount").text  = ('%.2f' % line.debit).replace('.',',')
-                    ET.SubElement(anal, "Amount").text    = ('%.2f' % line.debit).replace('.',',')
-                    ET.SubElement(detail, "DebCre").text  = '1'
+            ET.SubElement(sale, "CurrencyCode").text   = invoice.currency_id.name
+            ET.SubElement(sale, "DocType").text        = invoice_type
+            ET.SubElement(sale, "DocNumber").text      = ''.join(numbers)
+            ET.SubElement(sale, "DocDate").text        = datetime.datetime.strptime(invoice.date_invoice, "%Y-%m-%d").strftime("%d/%m/%Y")
+            ET.SubElement(sale, "DueDate").text        = datetime.datetime.strptime(invoice.date_due, "%Y-%m-%d").strftime("%d/%m/%Y")
+            ET.SubElement(sale, "OurRef").text         = invoice.name
+            ET.SubElement(sale, "Amount").text         = ('%.2f' % invoice.amount_total).replace('.',',')
+            ET.SubElement(sale, "Status").text         = '0'
+
+            details = ET.SubElement(sale, "Details")
+            for line in invoice.move_id.line_id:
+
+                if invoice.account_id.code == line.account_id.code and total_done:
+                    continue
+
+                detail = ET.SubElement(details, "Detail")
+                anal = ET.SubElement(detail, "Analytics1")
+                anal = ET.SubElement(anal, "Analytic")
+
+                if invoice.account_id.code == line.account_id.code:
+
+                    total_done = True
+                    ET.SubElement(detail, "Amount").text  = ('%.2f' % invoice.amount_total).replace('.',',')
+                    ET.SubElement(anal, "Amount").text    = ('%.2f' % invoice.amount_total).replace('.',',')
+                    if invoice.type == 'out_refund':
+                        ET.SubElement(detail, "DebCre").text  = '-1'
+                    else:
+                        ET.SubElement(detail, "DebCre").text  = '1'
                 else:
-                    ET.SubElement(detail, "Amount").text  = ('%.2f' % line.credit).replace('.',',')
-                    ET.SubElement(anal, "Amount").text    = ('%.2f' % line.credit).replace('.',',')
-                    ET.SubElement(detail, "DebCre").text  = '-1'
 
-            ET.SubElement(detail, "Account").text = line.account_id.code
+                    if line.debit != 0:
+                        ET.SubElement(detail, "Amount").text  = ('%.2f' % line.debit).replace('.',',')
+                        ET.SubElement(anal, "Amount").text    = ('%.2f' % line.debit).replace('.',',')
+                        ET.SubElement(detail, "DebCre").text  = '1'
+                    else:
+                        ET.SubElement(detail, "Amount").text  = ('%.2f' % line.credit).replace('.',',')
+                        ET.SubElement(anal, "Amount").text    = ('%.2f' % line.credit).replace('.',',')
+                        ET.SubElement(detail, "DebCre").text  = '-1'
 
-            if line.tax_code_id:
-                ET.SubElement(detail, "Ventil").text  = line.tax_code_id.ventil_code
-                ET.SubElement(detail, "VAT1").text    = line.tax_code_id.code
-            else:
-                ET.SubElement(detail, "Ventil").text  = '0'
+                ET.SubElement(detail, "Account").text = line.account_id.code
 
+                if line.tax_code_id:
+                    ET.SubElement(detail, "Ventil").text  = line.tax_code_id.ventil_code
+                    ET.SubElement(detail, "VAT1").text    = line.tax_code_id.code
+                else:
+                    ET.SubElement(detail, "Ventil").text  = '0'
+        #return consolidated XML result
         return root
 
 # class account_invoice_line(osv.Model):
