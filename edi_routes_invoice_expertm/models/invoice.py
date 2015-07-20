@@ -32,11 +32,11 @@ class account_invoice(osv.Model, EDIMixin):
         if invalid_invoices:
             raise except_orm(_('Invalid pickings in selection!'), _('The following pickings are invalid, please remove from selection. %s') % (map(lambda record: record.name, invalid_invoices)))
 
-        for invoice in valid_invoices:
-            content = invoice.edi_export_invoice_expertm(invoice, None)
-            result = self.env['edi.tools.edi.document.outgoing'].create_from_content(invoice.internal_number, content, partner_id.id, 'account.invoice', 'send_edi_export_invoice_expertm', type='XML')
-            if not result:
-                raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following invoice %s') % (invoice.name)))
+        content = valid_invoices.edi_export_invoice_expertm(edi_struct=None)
+        result = self.env['edi.tools.edi.document.outgoing'].create_from_content('expertm', content, partner_id.id, 'account.invoice', 'send_edi_export_invoice_expertm', type='XML')
+        if not result:
+            raise except_orm(_('EDI creation failed!', _('EDI processing failed for the following invoice %s') % (invoice.name)))
+
         return result
 
     @api.cr_uid_ids_context
@@ -45,12 +45,15 @@ class account_invoice(osv.Model, EDIMixin):
         root.set("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
         root.set("xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
 
-        invoices = pick_db.browse(cr, uid, ids, context=context)
+        inv_db = self.pool.get('account.invoice')
+
+        invoices = inv_db.browse(cr, uid, ids, context=context)
         invoice = next(iter(invoices), None)
 
         sales = ET.SubElement(root, "Sales")
         sale = ET.SubElement(sales, "Sale")
         for invoice in invoices:
+            sale = ET.SubElement(sales, "Sale")
             total_done = False
             numbers = re.findall('\d+', invoice.number)
             invoice_type = '10'
