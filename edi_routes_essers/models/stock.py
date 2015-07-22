@@ -188,7 +188,7 @@ class stock_picking(models.Model):
 
     @api.multi
     def _build_priority_header(self, header_element):
-        if self.priority == 3:
+        if self.priority == '3':
             EssersEdiBuilder().build_e1bptext_element(header_element, self._name_edi(6), '0', 'SBY', '1')
 
     @api.model
