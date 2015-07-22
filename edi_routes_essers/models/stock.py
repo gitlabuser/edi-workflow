@@ -22,11 +22,11 @@ class stock_picking(models.Model):
     def valid_for_edi_export_essers(self, record):
         if record.state != 'assigned':
             return False
-        if not record.partner_id.ref:
+        if not record.partner_id.expertm_reference:
             return False
         if record.origin:
             order = self.env['sale.order'].search([('name', '=', record.origin)])
-            if not order.partner_id.ref:
+            if not order.partner_id.expertm_reference:
                 return False
         return True
 
@@ -141,7 +141,7 @@ class stock_picking(models.Model):
         # sold-to
         sale_order = self.env['sale.order'].search([('name', '=', self.origin)], limit=1)
         if sale_order:
-            builder.build_e1bpdlvpartner_element(header_element, '1', 'AG', sale_order.partner_id.ref)
+            builder.build_e1bpdlvpartner_element(header_element, '1', 'AG', sale_order.partner_id.expertm_reference)
             builder.build_e1bpadr1_element(header_element,
                                            sequence='1',
                                            name=sale_order.partner_id.name,
@@ -152,7 +152,7 @@ class stock_picking(models.Model):
                                            country=sale_order.partner_id.country_id.code,
                                            language=sale_order.partner_id.lang[3:5])
         # ship-to
-        builder.build_e1bpdlvpartner_element(header_element, '2', 'WE', self.partner_id.ref)
+        builder.build_e1bpdlvpartner_element(header_element, '2', 'WE', self.partner_id.expertm_reference)
         builder.build_e1bpadr1_element(header_element,
                                        sequence='2',
                                        name=self.partner_id.name,

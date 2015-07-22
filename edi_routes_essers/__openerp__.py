@@ -13,7 +13,8 @@
         'sale_stock_incoterm_chainer',
         'product_customerinfo',
         'delivery_instructions',
-    ],
+        'edi_routes_invoice_expertm',
+        ],
     'data': [
         'data/config.xml',
         'views/stock_view.xml',
