@@ -115,7 +115,8 @@ class stock_picking(osv.Model):
 
         reader = csv.DictReader(pclofile, delimiter=';', quotechar='"', skipinitialspace=True)
         sorted_rows = sorted(reader, key=lambda row: (row[ORDER_NUMBER], row[ORDER_LINE_NUMBER]))
-        for delivery_number, rows in groupby(sorted_rows, lambda row: row[ORDER_NUMBER]):
+        for delivery_number, rws in groupby(sorted_rows, lambda row: row[ORDER_NUMBER]):
+            rows = list(rws)
             delivery_ids = pick_db.search(cr, uid, [('name', '=', delivery_number.replace('_', '/'))])
             if not delivery_ids:
                 continue
@@ -128,6 +129,7 @@ class stock_picking(osv.Model):
             if not delivery.pack_operation_ids:
                 delivery.do_prepare_partial()
 
+            processed_ids = []
             for move in delivery.move_lines:
                 if move.state == 'done':
                     continue
@@ -137,7 +139,9 @@ class stock_picking(osv.Model):
                     quantity = float(row[ORDER_LINE_QUANTITY]) or 0.0
                     sscc_code = row[COLLI_NUMBER] or row[PALLET_NUMBER]
                     op = operation_db.copy(cr, uid, ref_operation.id, {'product_qty': quantity ,'qty_done': quantity, 'result_package_id': sscc_dictionary[sscc_code]})
-                operation_db.unlink(cr, uid, [ref_operation.id])
+                    processed_ids.append(op)
+            unprocessed_ids = operation_db.search(cr, uid, ['&', ('picking_id', '=', delivery.id), '!', ('id', 'in', processed_ids)])
+            operation_db.unlink(cr, uid, unprocessed_ids)
 
             if execute_deliver:
                 delivery.do_transfer()
