@@ -251,10 +251,9 @@ class stock_picking(models.Model):
         processed_ids = []
         for edi_line in content['E1BPOBDLVITEMCON']:
             move_line = delivery.move_lines.filtered(lambda ml: ml.edi_sequence == edi_line['DELIV_ITEM'])
-            pack_operation = move_line.linked_move_operation_ids.operation_id
-            if not pack_operation:
+            if len(move_line.linked_move_operation_ids) == 0:
                 raise except_orm(_('No pack operation found!'), _('No pack operation was found for edi sequence %s in picking %s (%d)') % (edi_line['DELIV_ITEM'], delivery.name, delivery.id))
-            pack_operation.ensure_one()
+            pack_operation = move_line.linked_move_operation_ids[0].operation_id
             pack_operation.with_context(no_recompute=True).write({'product_qty': edi_line['DLV_QTY_IMUNIT']})
             processed_ids.append(pack_operation.id)
 
