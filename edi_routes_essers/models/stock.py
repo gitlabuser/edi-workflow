@@ -94,6 +94,27 @@ class stock_picking(models.Model):
             ET.SubElement(temp, "MATERIAL").text = line.product_id.name
             ET.SubElement(temp, "DLV_QTY_STOCK").text = str(int(line.product_qty))
 
+            if not line.product_id.bom_ids:
+                ET.SubElement(temp, "BOMEXPL_NO").text = '0'
+            else:
+                ET.SubElement(temp, "BOMEXPL_NO").text = '5'
+                j = i
+                for bom in line.product_id.bom_ids[0].bom_line_ids:
+                    j = j + 1
+                    temp = ET.SubElement(header, "E1BPOBDLVITEM")
+                    temp.set('SEGMENT', '1')
+                    ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
+                    ET.SubElement(temp, "ITM_NUMBER").text = "%06d" % (j,)
+                    ET.SubElement(temp, "MATERIAL").text = bom.product_id.name
+                    ET.SubElement(temp, "DLV_QTY_STOCK").text = str(int(line.product_qty * bom.product_qty))
+                    ET.SubElement(temp, "BOMEXPL_NO").text = '6'
+
+                    temp = ET.SubElement(header, "E1BPOBDLVITEMORG")
+                    temp.set('SEGMENT', '1')
+                    ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
+                    ET.SubElement(temp, "ITM_NUMBER").text = "%06d" % (j,)
+                    ET.SubElement(temp, "STGE_LOC").text = '0'
+
             temp = ET.SubElement(header, "E1BPOBDLVITEMORG")
             temp.set('SEGMENT', '1')
             ET.SubElement(temp, "DELIV_NUMB").text = delivery.name.replace('/', '_')
