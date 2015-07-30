@@ -176,7 +176,7 @@ class stock_picking(osv.Model, EDIMixin):
             for quant in tracking.quant_ids:
                 line_segment = {}
                 product = product_db.browse(cr, uid, quant.product_id.id, context)
-                so_ids = order_db.search(cr, uid, [('name', '=', quant.history_ids.picking_id.origin)]) #was origin, nog available on quant
+                so_ids = order_db.search(cr, uid, [('name', '=', quant.history_ids[0].picking_id[0].origin)]) #was origin, nog available on quant
                 order = order_db.browse(cr, uid, so_ids, context)
                 dtm = datetime.datetime.strptime(order.date_order, "%Y-%m-%d %H:%M:%S")
                 line_segment["num"] = line_counter
@@ -224,7 +224,7 @@ class stock_picking(osv.Model, EDIMixin):
             if not cps["pacs"]["pac"]:
                 continue
             pac = cps["pacs"]["pac"][0]
-            if pac["iso"] == 'X1':
+            if pac["iso"] == 'pallet':
                 number_of_pallets += 1
                 weight_of_pallets += pac["brutweight"]
 
@@ -232,7 +232,7 @@ class stock_picking(osv.Model, EDIMixin):
         header_cps_segment["pacs"]["pac"].append({
             "totbrutweight": int(weight_of_pallets),
             "qua": int(number_of_pallets),
-            "iso": "X1"
+            "iso": "pallet"
         })
 
         return edi_doc

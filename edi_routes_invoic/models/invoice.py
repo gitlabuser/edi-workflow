@@ -99,7 +99,7 @@ class account_invoice(osv.Model, EDIMixin):
         if not do_id:
             raise osv.except_osv(_('Warning!'), _("Could not find delivery for invoice: {!s}").format(invoice.number))
 
-        so_id = order_db.search(cr, uid, [('name', '=', ref[2])])
+        so_id = order_db.search(cr, uid, [('name', '=', pick_db.browse(cr, uid, do_id, context)[0].origin)])
         if not so_id:
             raise osv.except_osv(_('Warning!'), _("Could not find order for invoice: {!s}").format(invoice.number))
 
